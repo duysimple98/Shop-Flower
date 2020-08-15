@@ -1,0 +1,8 @@
+1/ Cài wkhtmltopdf(để xem file pdf đơn hàng) tại:  https://wkhtmltopdf.org/downloads.html
+2/ Payment with card:
+	Email: nhập mail của bạn
+	Card number: 4242 4242 4242 4242
+	Ngày: 08 / 21
+	CVC: 826
+3/ Tài khoản admin:
+	admin@gmail.com - thanhduy66

@@ -1,8 +1,8 @@
-from flask import render_template, request, Markup, session, flash, redirect, url_for, g,jsonify,make_response
+from flask import render_template, request, Markup, session, flash, redirect, url_for, g,jsonify,make_response,Response
 from ShopHoa import app,db,photos,bcrypt,login_manager,mail,RSS_feeds,search, google_blueprint, config_pdf
 from ShopHoa.repository.form import *
 from ShopHoa.repository.models import *
-from ShopHoa.repository.auth import *
+from ShopHoa.repository.json import *
 from flask_login import current_user,login_user,logout_user,login_required
 from flask_mail import Mail, Message
 from flask_dance.contrib.github import github
@@ -11,12 +11,20 @@ from flask_dance.consumer import oauth_authorized
 import random
 import secrets
 import os
+from datetime import datetime
 from PIL import Image
 from pusher import pusher
 import stripe
 import feedparser
 import token
 import json
+import time
+import pandas as pd
+import pygal
+from io import StringIO, BytesIO
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
 import pdfkit
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -313,11 +321,42 @@ def updateshoppingcart():
 def get_order():
     if current_user.is_authenticated:
         customer_id = current_user.id
+        grandTotal = 0
+        subTotal = 0
         invoice = secrets.token_hex(5)
         updateshoppingcart()
         try:
             order = CustomerOrder(invoice=invoice, customer_id=customer_id, orders=session['Shoppingcart'])
             db.session.add(order)
+            for key, product in session['Shoppingcart'].items():
+                discount = (product['discount'] / 100) * float(product['price'])
+                subTotal += float(product['price']) * int(product['quantity'])
+                subTotal -= discount
+                tax = ("%.2f" % (.06 * float(subTotal)))
+                grandTotal = ("%.2f" % (int(subTotal)))
+                email_nguoi_nhan = current_user.email
+                email_nguoi_gui = app.config['MAIL_USERNAME']
+                tieu_de = 'Shop Flower đã nhận đơn hàng #' + order.invoice 
+                noi_dung = 'Xin chào <b>' + current_user.name + '</b>,<br>'
+                noi_dung += 'Shop Flower đã nhận được yêu cầu đặt hàng của bạn và đang xử lý nhé.<br>'
+                noi_dung += 'Quý khách vui lòng chuẩn bị số tiền là: ' + grandTotal + ' VNĐ. <br>'
+                noi_dung += '<b><i>Lưu ý</i></b>: Đây là email tự động. Vui lòng không reply.'
+                msg = Message(tieu_de, sender=email_nguoi_gui, recipients=[email_nguoi_nhan])
+                msg.body = noi_dung
+                msg.html = msg.body
+                mail.send(msg)
+                x = datetime.now()
+                thong_ke = {
+                    'Total': grandTotal,
+                    'Day' : x.strftime("%A"),
+                    'Month': x.strftime("%B"),
+                    'Year' : x.year,
+                }
+                duong_dan = 'ShopHoa/du_lieu/thong_ke/data_thong_ke.json'
+                ds_thong_ke = doc_file_json(duong_dan)
+                ds_thong_ke.append(thong_ke)
+                kq = ghi_file_json(duong_dan, ds_thong_ke)
+            order.total = grandTotal
             db.session.commit()
             session.pop('Shoppingcart')
             flash('Your order has been sent successfully', 'success')
@@ -369,11 +408,13 @@ def news(id):
         name = request.form.get('name')
         email = request.form.get('email')
         message = request.form.get('message')
-        comment = Comments(name=name,email=email,message=message,post_id=post_id)
+        comment = Comments(name=name,email=email,message=message,post_id=post_id, feature=False)
         db.session.add(comment)
-        post.comments = post.comments + 1
-        db.session.commit()
-        flash('Your comment has been submited  submitted will be published after aproval of admin', 'success')
+        if comment.post_id == id:
+            if comment.feature == 0:
+                post.comments = post.comments
+                db.session.commit()
+                flash('Your comment has been submited  submitted will be published after aproval of admin', 'success')
         return redirect(request.url)
 
     return render_template('news-details.html', post=post, comment=comment, Thanks=Thanks)
@@ -447,17 +488,6 @@ def google_logged_in(blueprint, token):
             login_user(oauth.user)
             flash("Successfully signed in with Google.")
         else:
-            # email = user_data['email']
-            # query = Register.query.filter_by(email=email)
-            # try:
-            #     user = query.one()
-            # except NoResultFound:
-            #     user = Register()
-            #     user.email = user_data['email']
-            #     user.name = user_data['name']
-            #     db.session.add(user)
-            #     db.session.commit()   
-            # login_user(user) 
             email = user_data['email']
             query = Register.query.filter_by(email=email)
             try:
@@ -476,3 +506,32 @@ def google_logged_in(blueprint, token):
                 return redirect(url_for('index'))
     return False
 
+
+# @app.route('/bar')
+# def bar_chart():
+#     duong_dan = 'ShopHoa/du_lieu/thong_ke/data_thong_ke.json'
+#     data = doc_file_json(duong_dan)
+#     dates = [i['Year'] for i in data]
+#     values = [i['Total'] for i in data]
+
+#     df = pd.DataFrame({'dates':dates, 'values':values})
+#     df['dates']  = [pd.to_datetime(i) for i in df['dates']]
+#     plt.bar(dates, values)
+#     plt.ylabel('Tổng tiền')
+#     plt.xlabel('Năm')
+#     plt.title('Thống kê doanh thu')
+#     ten_file_hinh = datetime.now().strftime('%Y%m%d_%H%M%S') + '.png'
+#     plt.savefig('ShopHoa/static/thong_ke/'+ten_file_hinh)
+#     return render_template('app.html', url=('/static/thong_ke/'+ten_file_hinh))
+
+@app.route('/bar')
+def bar_chart():
+    duong_dan = 'ShopHoa/du_lieu/thong_ke/data_thong_ke.json'
+    data = doc_file_json(duong_dan)
+    chart = pygal.Bar()
+    mark_list = list(map(float,[x['Total'] for x in data]))
+    chart.add('Doanh Thu',mark_list)
+    chart.x_labels = [x['Day'] for x in data]
+    chart.render_to_file('ShopHoa/static/thong_ke/bar_chart.svg')
+    img_url = 'static/thong_ke/bar_chart.svg?cache=' + str(time.time())
+    return render_template('app.html',image_url=img_url)

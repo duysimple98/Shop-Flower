@@ -29,9 +29,9 @@ class Addproducts(Form):
     discription = TextAreaField('Discription',[validators.DataRequired()])
     color = TextAreaField('Colors',[validators.DataRequired()])
 
-    image_1= FileField('Image1', validators=[FileRequired(), FileAllowed(['jpg','png','gif','jpeg'],'Images only!')])
-    image_2= FileField('Image2', validators=[FileRequired(), FileAllowed(['jpg','png','gif','jpeg'],'Images only!')])
-    image_3= FileField('Image3', validators=[FileRequired(), FileAllowed(['jpg','png','gif','jpeg'],'Images only!')])
+    image_1= FileField('Image1', validators=[FileAllowed(['jpg','png','gif','jpeg'],'Images only!')])
+    image_2= FileField('Image2', validators=[FileAllowed(['jpg','png','gif','jpeg'],'Images only!')])
+    image_3= FileField('Image3', validators=[FileAllowed(['jpg','png','gif','jpeg'],'Images only!')])
 
 
 class CustomerRegisterForm(FlaskForm):

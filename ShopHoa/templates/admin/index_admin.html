@@ -30,7 +30,7 @@
                                             <tr>
                                                 <td>{{loop.index}}</td>
                                                 <td>{{product.name}}</td>
-                                                <td>{{product.price}}</td>
+                                                <td>{{ '{:,}'.format(product.price|round|int).replace(',', '.') }} VNĐ</td>
                                                 <td>{{product.discount}} %</td>
                                                 <td>{{product.brand.name}}</td>
                                                 <td>{{product.category.name}}</td>

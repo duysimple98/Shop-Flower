@@ -19,7 +19,7 @@ def AddCart():
     try:
         product_id = request.form.get('product_id')
         quantity = int(request.form.get('quantity'))
-        color = request.form.get('colors')
+        color = request.form.get('color')
         product = Addproduct.query.filter_by(id=product_id).first()
 
         if request.method == "POST":

@@ -61,7 +61,7 @@
                         <b class="logo-icon">
                             <!--You can put here icon as well // <i class="wi wi-sunset"></i> //-->
                             <!-- Dark Logo icon -->
-                            <img src=/static/admin/assets/images/logo-icon.png" alt="homepage" class="dark-logo" />
+                            <img src='/static/admin/assets/images/logo-icon.png' alt="homepage" class="dark-logo" />
                             <!-- Light Logo icon -->
                             <img src="/static/admin/assets/images/logo-light-icon.png" alt="homepage" class="light-logo" />
                         </b>
@@ -244,11 +244,17 @@
                                         <span class="hide-menu"> Quản Lý Order</span>
                                     </a>
                                 </li>
+                                <li class="sidebar-item">
+                                    <a href="/bar" class="sidebar-link">
+                                        <i class="mdi mdi-adjust"></i>
+                                        <span class="hide-menu"> Thống Kê Doanh Thu</span>
+                                    </a>
+                                </li>
                             </ul>
                         </li>
-                s
+                
                         <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                                href="authentication-login1.html" aria-expanded="false"><i
+                                href="{{url_for('admin_logout')}}" aria-expanded="false"><i
                                     class="mdi mdi-directions"></i><span class="hide-menu">Log Out</span></a></li>
                     </ul>
                 </nav>

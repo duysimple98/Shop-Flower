@@ -270,11 +270,15 @@ def comments():
 
 def check(id):
     comment = Comments.query.get_or_404(id)
+    post = Post.query.get_or_404(comment.post_id)
     if (comment.feature == True):
-        comment.feature = False
-        db.session.commit()
+        if post:
+            comment.feature = False
+            post.comments = post.comments - 1
+            db.session.commit()
     else:
         comment.feature = True
+        post.comments = post.comments + 1
         db.session.commit()
         return redirect(url_for('comments'))
     return redirect(url_for('comments'))
@@ -329,16 +333,32 @@ def delete(id):
     db.session.commit()
     return redirect(url_for('admin'))
 
-@app.route('/delcomment/<int:id>')
-@login_required
+@app.route('/delcomment/<int:id>', methods=['POST'])
 def delcomment(id):
     comment = Comments.query.get_or_404(id)
+    post = Post.query.get_or_404(comment.post_id)
+    if post:
+        post.comments = post.comments - 1
     db.session.delete(comment)
     db.session.commit()
     flash('Comment has deleted ','success')
-    return redirect(url_for('admin'))
+    return redirect(url_for('comments'))
 
 
 @app.route('/admin/chat')
 def chat():
     return render_template('admin/chat.html')
+
+@app.route('/check-order/<int:id>', methods=['POST','GET'])
+
+def check_order(id):
+    order = CustomerOrder.query.get_or_404(id)
+    if (order.status == 'Pending'):
+            order.status = 'Paid'
+            db.session.commit()
+    return redirect(url_for('admin_order'))  
+
+@app.route('/logout-admin')
+def admin_logout():
+    logout_user()
+    return redirect(url_for('admin_login'))      

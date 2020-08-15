@@ -110,6 +110,7 @@ class CustomerOrder(db.Model):
         customer_id = db.Column(db.Integer, unique=False, nullable=False)
         date_created = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
         orders = db.Column(JsonEcodedDict)
+        total = db.Column(db.Float, default=0, nullable=False)
 
         def __repr__(self):
             return '<CustomerOrder %r>' % self.invoice

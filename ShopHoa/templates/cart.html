@@ -74,7 +74,7 @@
                                              <td></td>
                                             {% endif %}
                                             {% set subtotal = product.quantity|int * product.price|float  %}
-                                            <td class="product-subtotal"><span class="amount">{{ '{:,}'.format((subtotal - discount)|round|float).replace(",", ".") }} Vnđ</span></td>
+                                            <td class="product-subtotal"><span class="amount">{{ '{:,}'.format((subtotal - discount)|round|int).replace(",", ".") }} Vnđ</span></td>
                                                 <td><button class="btn btn-primary" type="submit" >Update</button>
 </button> </td>
                                             </form>
